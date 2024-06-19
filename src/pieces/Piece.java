@@ -1,27 +1,25 @@
 package pieces;
 
-import org.apache.batik.swing.JSVGCanvas;
-
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import java.awt.Font;
 
 import board.Field;
 
 public abstract class Piece {
-    private String color;  // "white" or "black"
+    private String color;
     private int row;
     private int col;
+    private String circleMoveUnicode;
+    private String edgeCaptureUnicode;
+    private String pieceUnicode;
 
-    // SVG file paths
-    private String circleMoveSvg;
-    private String edgeCaptureSvg;
-
-    public Piece(String color, int row, int col, String circleMoveSvg, String edgeCaptureSvg) {
+    public Piece(String color, int row, int col, String circleMoveUnicode, String edgeCaptureUnicode, String pieceUnicode) {
         this.color = color;
         this.row = row;
         this.col = col;
-        this.circleMoveSvg = circleMoveSvg;
-        this.edgeCaptureSvg = edgeCaptureSvg;
+        this.circleMoveUnicode = circleMoveUnicode;
+        this.edgeCaptureUnicode = edgeCaptureUnicode;
+        this.pieceUnicode = pieceUnicode;
     }
 
     public String getColor() {
@@ -54,26 +52,20 @@ public abstract class Piece {
     public abstract boolean isValidCapture(int newRow, int newCol, Field[][] board);
 
     public void displayMoveIcon(JButton button) {
-        renderSVG(button, circleMoveSvg);
+        button.setText(circleMoveUnicode);
     }
 
     public void displayCaptureIcon(JButton button) {
-        renderSVG(button, edgeCaptureSvg);
+        button.setText(edgeCaptureUnicode);
     }
 
     public void displayPieceIcon(JButton button) {
-        renderSVG(button, getPieceSvgPath());
+        button.setText(pieceUnicode);
+        button.setFont(new Font("Arial", Font.PLAIN, button.getHeight() - 10));
     }
 
-    protected abstract String getPieceSvgPath();
-
-    protected void renderSVG(JComponent component, String svgFilePath) {
-        JSVGCanvas svgCanvas = new JSVGCanvas();
-        svgCanvas.setURI(getClass().getResource("/svg/" + svgFilePath).toString());
-        component.removeAll();
-        component.setLayout(new BorderLayout());
-        component.add(svgCanvas, BorderLayout.CENTER);
-        component.validate();
+    protected String getPieceUnicode() {
+        return pieceUnicode;
     }
 
     @Override

@@ -6,8 +6,8 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="resources/svg"/>
 	<classpathentry kind="src" path=".settings"/>
-	<classpathentry kind="src" path="resources"/>
-	<classpathentry kind="lib" path="C:/Users/tinob/Downloaded stuff/batik-bin-1.17/batik-1.17/lib/batik-swing-1.17.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/ChessJARS"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

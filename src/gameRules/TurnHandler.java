@@ -3,30 +3,33 @@ package gameRules;
 import javax.swing.JLabel;
 
 public class TurnHandler {
-    private Turn turn;
-    private JLabel statusLabel;
+	private Turn turn;
+	private JLabel statusLabel;
 
-    public TurnHandler(JLabel statusLabel) {
-        this.turn = new Turn();
-        this.statusLabel = statusLabel;
-        updateStatusLabel();
-    }
+	public TurnHandler(JLabel statusLabel) {
+		this.turn = new Turn();
+		this.statusLabel = statusLabel;
+		updateStatusLabel();
+	}
 
-    public String getCurrentPlayer() {
-        return turn.getCurrentPlayer();
-    }
+	public String getCurrentPlayer() {
+		return turn.getCurrentPlayer();
+	}
 
-    public void switchTurn() {
-        turn.switchTurn();
-        updateStatusLabel();
-    }
+	public void nextTurn() {
+		switchTurn();
+	}
 
-    public boolean isPlayerTurn(String color) {
-        return turn.isPlayerTurn(color);
-    }
+	public void switchTurn() {
+		turn.switchTurn();
+		updateStatusLabel();
+	}
 
-    private void updateStatusLabel() {
-        statusLabel.setText(turn.getCurrentPlayer() + "'s Turn");
-    }
+	public boolean isTurn(String color) {
+		return turn.isPlayerTurn(color);
+	}
+
+	private void updateStatusLabel() {
+		statusLabel.setText(turn.getCurrentPlayer() + "'s Turn");
+	}
 }
-

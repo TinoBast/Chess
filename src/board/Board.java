@@ -1,20 +1,21 @@
 package board;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import gameRules.PromotePawn;
+import javax.swing.JButton;
+import javax.swing.JPanel;
 import gameRules.TurnHandler;
 import pieces.Knight;
 import pieces.Piece;
 
 public class Board extends JPanel {
+
+    private static final long serialVersionUID = 1L;
     private static final int BOARD_SIZE = 8;
     private Field[][] fields = new Field[BOARD_SIZE][BOARD_SIZE];
     private Field selectedField = null;
     private TurnHandler turnHandler;
-    private PromotePawn promoteHandler;
 
     public Board() {
         setLayout(new GridLayout(BOARD_SIZE, BOARD_SIZE));
@@ -29,9 +30,8 @@ public class Board extends JPanel {
         }
     }
 
-    public void initializeBoard(JButton[][] squares, PromotePawn promoteHandler, TurnHandler turnHandler) {
+    public void initializeBoard(JButton[][] squares, TurnHandler turnHandler) {
         this.turnHandler = turnHandler;
-        this.promoteHandler = promoteHandler;
 
         // Initialize pieces on the board
         initializeKnights();
@@ -48,16 +48,13 @@ public class Board extends JPanel {
     }
 
     private void initializeKnights() {
-        // SVG file paths for Knights
-        String circleMoveSvg = "circle_move.svg";
-        String edgeCaptureSvg = "edge_capture.svg";
-        String whiteKnightSvg = "white_knight.svg";
-        String blackKnightSvg = "black_knight.svg";
+        String circleMoveUnicode = "\u25CB";  // Unicode for an empty circle
+        String edgeCaptureUnicode = "\u25CF"; // Unicode for a filled circle
 
-        fields[0][1].setPiece(new Knight("black", 0, 1, circleMoveSvg, edgeCaptureSvg, whiteKnightSvg, blackKnightSvg));
-        fields[0][6].setPiece(new Knight("black", 0, 6, circleMoveSvg, edgeCaptureSvg, whiteKnightSvg, blackKnightSvg));
-        fields[7][1].setPiece(new Knight("white", 7, 1, circleMoveSvg, edgeCaptureSvg, whiteKnightSvg, blackKnightSvg));
-        fields[7][6].setPiece(new Knight("white", 7, 6, circleMoveSvg, edgeCaptureSvg, whiteKnightSvg, blackKnightSvg));
+        fields[0][1].setPiece(new Knight("black", 0, 1, circleMoveUnicode, edgeCaptureUnicode));
+        fields[0][6].setPiece(new Knight("black", 0, 6, circleMoveUnicode, edgeCaptureUnicode));
+        fields[7][1].setPiece(new Knight("white", 7, 1, circleMoveUnicode, edgeCaptureUnicode));
+        fields[7][6].setPiece(new Knight("white", 7, 6, circleMoveUnicode, edgeCaptureUnicode));
     }
 
     private void updatePieceGUI(JButton[][] squares) {
@@ -67,20 +64,36 @@ public class Board extends JPanel {
                 if (piece != null) {
                     piece.displayPieceIcon(squares[row][col]);
                 } else {
-                    // Clear the button if no piece is present
-                    squares[row][col].setIcon(null);
-                    squares[row][col].setText("");
+                    squares[row][col].setText(null);
+                    squares[row][col].removeAll();
+                    squares[row][col].repaint();
                 }
             }
         }
     }
 
-    private void showPossibleMovesAndCaptures(Piece piece, JButton[][] squares, Field[][] board) {
+    private void clearPossibleMoves(JButton[][] squares) {
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
-                if (piece.isValidMove(row, col, board)) {
+                if (fields[row][col].isHighlighted()) {
+                    fields[row][col].setHighlighted(false);
+                    squares[row][col].setText(null);
+                    squares[row][col].removeAll();
+                    squares[row][col].repaint();
+                }
+            }
+        }
+    }
+
+    private void highlightPossibleMoves(JButton[][] squares, Field selectedField) {
+        Piece piece = selectedField.getPiece();
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
+                if (piece.isValidMove(row, col, fields)) {
+                    fields[row][col].setHighlighted(true);
                     piece.displayMoveIcon(squares[row][col]);
-                } else if (piece.isValidCapture(row, col, board)) {
+                } else if (piece.isValidCapture(row, col, fields)) {
+                    fields[row][col].setHighlighted(true);
                     piece.displayCaptureIcon(squares[row][col]);
                 }
             }
@@ -100,33 +113,39 @@ public class Board extends JPanel {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            Field field = fields[row][col];
-            if (selectedField != null) {
-                if (selectedField.getPiece().isValidMove(row, col, fields)) {
-                    Piece movingPiece = selectedField.getPiece();
-                    selectedField.setPiece(null);
-                    field.setPiece(movingPiece);
-                    movingPiece.move(row, col);
+            Field clickedField = fields[row][col];
+            Piece piece = clickedField.getPiece();
 
-                    /* // Check for promotion
-                    if (movingPiece instanceof Pawn) {
-                        promoteHandler.setPromotedPawn((Pawn) movingPiece);
-                        promoteHandler.promotePawn(field);
-                    }
-                    */ 
+            if (selectedField == null && piece != null && piece.getColor().equals(turnHandler.getCurrentPlayer())) {
+                selectedField = clickedField;
+                // Highlight possible moves
+                highlightPossibleMoves(squares, selectedField);
+            } else if (selectedField != null) {
+                // Handle move or capture
+                Piece selectedPiece = selectedField.getPiece();
+                if (selectedPiece != null && (selectedPiece.isValidMove(row, col, fields) || selectedPiece.isValidCapture(row, col, fields))) {
+                    // Move the piece
+                    fields[selectedField.getRow()][selectedField.getCol()].setPiece(null);
+                    fields[clickedField.getRow()][clickedField.getCol()].setPiece(selectedPiece);
+                    selectedPiece.move(clickedField.getRow(), clickedField.getCol());
 
-                    turnHandler.switchTurn();
-                    selectedField = null;
+                    // Debug output
+                    System.out.println("Moved " + selectedPiece + " to (" + clickedField.getRow() + ", " + clickedField.getCol() + ")");
 
-                    // Update the GUI
+                    // Update GUI for the moved piece
                     updatePieceGUI(squares);
-                } else {
-                    System.out.println("Invalid move. Try again.");
+                    
+                    // Clear selection and highlighted moves
                     selectedField = null;
+                    clearPossibleMoves(squares);
+                    
+                    // Switch turn
+                    turnHandler.switchTurn();
+                } else {
+                    // Clear selection if the move is invalid
+                    selectedField = null;
+                    clearPossibleMoves(squares);
                 }
-            } else if (field.isOccupied() && field.getPiece().getColor().equals(turnHandler.getCurrentPlayer())) {
-                selectedField = field;
-                showPossibleMovesAndCaptures(field.getPiece(), squares, fields);
             }
         }
     }
